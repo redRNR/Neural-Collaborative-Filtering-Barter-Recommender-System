@@ -2,12 +2,13 @@ import torch
 import numpy as np
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-from sklearn.metrics import roc_curve, roc_auc_score
+from sklearn.metrics import roc_curve, auc as roc_auc_score
 
 def evaluate(model, test_data, num_users, num_items, social_adj, user_item_set):
     model.eval()
     all_pos_scores = []
     all_neg_scores = []
+    auc_scores = []
 
     for idx in tqdm(range(len(test_data))):
         idx_data = test_data[idx]
@@ -51,24 +52,28 @@ def evaluate(model, test_data, num_users, num_items, social_adj, user_item_set):
         all_pos_scores.append(pos_score)
         all_neg_scores.extend(neg_scores)
 
+        auc = np.mean([1 if pos_score > neg_score else 0 for neg_score in neg_scores])
+        auc_scores.append(auc)
+
+    average_auc = np.mean(auc_scores)
+    print(f'AUC: {average_auc:.4f}')
+
     y_true = np.array([1] * len(all_pos_scores) + [0] * len(all_neg_scores))
     y_scores = np.array(all_pos_scores + all_neg_scores)
     
-    auc_score = roc_auc_score(y_true, y_scores)
-    print(f'AUC: {auc_score:.4f}')
-
     fpr, tpr, _ = roc_curve(y_true, y_scores)
+    roc_auc = roc_auc_score(fpr, tpr)
 
     plt.figure()
-    plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (AUC = {auc_score:.4f})')
+    plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (AUC = {average_auc:.4f})')
     plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
     plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.05])
+    plt.ylim([0.0, 1.02])
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
     plt.title('Receiver Operating Characteristic (ROC) Curve')
     plt.legend(loc="lower right")
-    plt.savefig('roc_curve.png')
+    plt.savefig(f'roc_curve{average_auc:.4f}.png')
     plt.close()
 
-    return auc_score
+    return average_auc
