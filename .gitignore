@@ -1,4 +1,15 @@
 *.png
 *.json
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.pyc
+*.py[cod]
+*.so
+
+# Virtual environment
+venv/
+env/
+
+# Miscellaneous
+*.log
+*.sqlite3
+.DS_Store
