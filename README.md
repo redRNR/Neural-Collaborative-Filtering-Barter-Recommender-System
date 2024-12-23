@@ -16,9 +16,9 @@ The model leverages the strengths of deep learning to address the limitations of
 # Project Structure
 
 ```shell
-├── evaluate.py            # Evaluation script for computing AUC and ranking metrics
-├── load_data.py          # Prepares and loads the dataset for training and evaluation
-├── loss.py               # Implements the BPR loss function
+├── evaluate.py          # Evaluation script for computing AUC and ranking metrics
+├── load_data.py         # Prepares and loads the dataset for training and evaluation
+├── loss.py              # Implements the BPR loss function
 ├── main.py              # Main script for running experiments and hyperparameter tuning
 ├── ncf.py               # Defines the Neural Collaborative Filtering (NCF) model
 └── train_ncf.py         # Training script for the NCF model
