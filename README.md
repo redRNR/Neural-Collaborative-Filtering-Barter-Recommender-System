@@ -13,13 +13,14 @@ The model leverages the strengths of deep learning to address the limitations of
 - **Hyperparameter Tuning**: Includes search over embedding dimensions, batch sizes, learning rates, and network configurations.
 - **Social and Temporal Dynamics**: Supports additional embeddings for social bias and time-based features.
 
-## Directory Structure
+# Project Structure
+
+```shell
 ├── evaluate.py            # Evaluation script for computing AUC and ranking metrics
-├── load_data.py           # Prepares and loads the dataset for training and evaluation
-├── loss.py                # Implements the BPR loss function
-├── main.py                # Main script for running experiments and hyperparameter tuning
-├── ncf.py                 # Defines the Neural Collaborative Filtering (NCF) model
-├── train_ncf.py           # Training script for the NCF model
-└── Neural Collaborative Filtering Paper.pdf (not included)
+├── load_data.py          # Prepares and loads the dataset for training and evaluation
+├── loss.py               # Implements the BPR loss function
+├── main.py              # Main script for running experiments and hyperparameter tuning
+├── ncf.py               # Defines the Neural Collaborative Filtering (NCF) model
+└── train_ncf.py         # Training script for the NCF model
 
 
