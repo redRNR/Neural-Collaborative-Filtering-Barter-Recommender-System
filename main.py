@@ -37,7 +37,7 @@ embedding_configs = [
 
 embedding_dims = [8]
 batch_sizes = [512]
-epochs = [2]
+epochs = [100]
 learning_rates = [0.001]
 hidden_layer_configs = [[2]]
 NUM_RUNS = 1  # Number of runs for each configuration
@@ -109,7 +109,6 @@ for config in embedding_configs:
                     )
                     model = model.to(device)
                     
-                    # Train model
                     completed_epochs = train_ncf(
                         model,
                         train_data,
@@ -119,9 +118,10 @@ for config in embedding_configs:
                         epochs=epoch,
                         batch_size=batch_size,
                         lr=lr,
-                        use_time=config['use_time']
+                        use_time=config['use_time'],
+                        use_giver=config['giver']
                     )
-                    
+
                     if completed_epochs > 0:
                         try:
                             auc = evaluate(
@@ -130,9 +130,10 @@ for config in embedding_configs:
                                 num_users,
                                 num_items,
                                 social_adj,
-                                train_data
+                                train_data, 
+                                use_giver=config['giver'],
+                                use_time=config['use_time']
                             )
-                            
                             print(f'Run {run + 1} AUC: {auc:.4f}')
                             config_key = config_to_key(config, current_params)
                             config_runs[config_key].append(auc)

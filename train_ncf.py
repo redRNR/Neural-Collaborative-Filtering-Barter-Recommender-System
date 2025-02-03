@@ -6,7 +6,7 @@ import copy
 from loss import BPRLoss
 
 def train_ncf(model, train_data, social_adj, num_users, num_items, 
-              epochs=10, batch_size=1024, lr=0.001, use_time=True):
+              epochs=10, batch_size=1024, lr=0.001, use_time=True, use_giver=True):
     device = model.user_embedding.weight.device
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     loss_fn = BPRLoss(social_adj=None)
@@ -26,16 +26,22 @@ def train_ncf(model, train_data, social_adj, num_users, num_items,
         for batch in tqdm(data_loader, desc=f'Epoch {epoch+1}/{epochs}'):
             batch = batch.to(device)
             
-            # Extract indices from batch
+            # Extract indices according to the configuration:
             idx = 0
-            giver_indices = batch[:, idx] if batch.size(1) >= 3 else None
-            if giver_indices is not None:
+            if use_giver:
+                giver_indices = batch[:, idx]
                 idx += 1
+            else:
+                giver_indices = None
             user_indices = batch[:, idx]
             pos_item_indices = batch[:, idx + 1]
-            time_values = batch[:, idx + 2] if use_time and batch.size(1) > idx + 2 else None
+            idx += 2
+            if use_time:
+                time_values = batch[:, idx] if batch.size(1) > idx else None
+            else:
+                time_values = None
 
-            # Handle social indices
+            # Handle social indices (unchanged)
             if social_adj is None:
                 social_indices = user_indices
             else:
@@ -50,7 +56,10 @@ def train_ncf(model, train_data, social_adj, num_users, num_items,
 
             # Generate negative samples
             neg_item_indices = torch.randint(0, num_items, size=pos_item_indices.size(), device=device)
-            neg_giver_indices = torch.randint(0, num_users, size=giver_indices.size(), device=device) if giver_indices is not None else None
+            if use_giver:
+                neg_giver_indices = torch.randint(0, num_users, size=giver_indices.size(), device=device)
+            else:
+                neg_giver_indices = None
 
             optimizer.zero_grad()
             

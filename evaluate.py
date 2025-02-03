@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from tqdm import tqdm
 
-def evaluate(model, test_data, num_users, num_items, social_adj, user_item_set):
+def evaluate(model, test_data, num_users, num_items, social_adj, user_item_set, use_giver=True, use_time=True):
     device = model.user_embedding.weight.device
     model.eval()
     all_pos_scores = []
@@ -15,14 +15,19 @@ def evaluate(model, test_data, num_users, num_items, social_adj, user_item_set):
             try:
                 idx_data = test_data[idx].to(device)
                 idx_offset = 0
-                giver = int(idx_data[idx_offset]) if idx_data.size(0) >= 3 else None
-                if giver is not None:
+                if use_giver:
+                    giver = int(idx_data[idx_offset])
                     idx_offset += 1
+                else:
+                    giver = None
                 user = int(idx_data[idx_offset])
                 idx_offset += 1
                 pos_item = int(idx_data[idx_offset])
                 idx_offset += 1
-                time_value = float(idx_data[idx_offset]) if idx_data.size(0) > idx_offset else None
+                if use_time:
+                    time_value = float(idx_data[idx_offset]) if idx_data.size(0) > idx_offset else None
+                else:
+                    time_value = None
 
                 if social_adj is not None and user < len(social_adj) and len(social_adj[user]) > 0:
                     social_u = int(np.random.choice(social_adj[user]))
@@ -40,7 +45,7 @@ def evaluate(model, test_data, num_users, num_items, social_adj, user_item_set):
                     np.random.choice(num_items, size=100, replace=False)
                 ).to(device)
                 
-                if giver is not None:
+                if use_giver:
                     neg_givers = torch.LongTensor(
                         np.random.choice(num_users, size=len(neg_items), replace=True)
                     ).to(device)
@@ -50,7 +55,7 @@ def evaluate(model, test_data, num_users, num_items, social_adj, user_item_set):
                 # Evaluate positive sample
                 pos_score = model(user_tensor, pos_item_tensor, 
                                   social_tensor, giver_tensor,
-                                  time_tensor if time_value is not None else None).cpu().item()
+                                  time_tensor).cpu().item()
                 
                 if np.isnan(pos_score):
                     continue
@@ -61,7 +66,7 @@ def evaluate(model, test_data, num_users, num_items, social_adj, user_item_set):
                     neg_items,
                     social_tensor.repeat(len(neg_items)),
                     neg_givers,
-                    time_tensor.repeat(len(neg_items)) if time_value is not None else None
+                    time_tensor.repeat(len(neg_items)) if time_tensor is not None else None
                 ).cpu().detach().numpy()
                 
                 # Skip if we got NaN values
@@ -72,10 +77,7 @@ def evaluate(model, test_data, num_users, num_items, social_adj, user_item_set):
                 all_neg_scores.extend(neg_scores)
 
                 # AUC calculation
-                auc = np.mean([
-                    1 if pos_score > neg_score else 0.5 if pos_score == neg_score else 0 
-                    for neg_score in neg_scores
-                ])
+                auc = np.mean([1 if pos_score > neg_score else 0.5 if pos_score == neg_score else 0 for neg_score in neg_scores])
                 auc_scores.append(auc)
 
             except Exception as e:
